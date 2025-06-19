@@ -6,6 +6,7 @@
     <title>Analiz Sonuçları - CRM Dashboard</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -20,77 +21,9 @@
             color: #2d3748;
         }
 
-        .dashboard-container {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 280px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 0 24px 24px 0;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            padding: 32px 0;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-        }
-
-        .logo {
-            padding: 0 32px 32px;
-            border-bottom: 1px solid #e2e8f0;
-            margin-bottom: 32px;
-        }
-
-        .logo h2 {
-            font-size: 28px;
-            font-weight: 700;
-            color: #2d3748;
-            margin: 0;
-        }
-
-        .logo .subtitle {
-            font-size: 14px;
-            color: #718096;
-            margin-top: 4px;
-        }
-
-        .nav-item {
-            margin: 0 16px 8px;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .nav-item.active {
-            background: linear-gradient(135deg, #48bb78, #38a169);
-            color: white;
-        }
-
-        .nav-item:hover:not(.active) {
-            background: rgba(72, 187, 120, 0.1);
-            transform: translateX(4px);
-        }
-
-        .nav-link {
-            padding: 16px 24px;
-            color: inherit;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            font-weight: 500;
-            border-radius: 12px;
-        }
-
-        .nav-link i {
-            margin-right: 12px;
-            width: 20px;
-            text-align: center;
-        }
-
-        .main-content {
-            flex: 1;
-            margin-left: 280px;
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
             padding: 32px;
         }
 
@@ -102,7 +35,7 @@
             margin-bottom: 32px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
         }
 
@@ -216,6 +149,22 @@
             display: flex;
             align-items: center;
             gap: 12px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 24px 0;
+        }
+
+        .chart-small {
+            height: 300px;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
         }
 
         .table {
@@ -351,20 +300,8 @@
         }
 
         @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                position: relative;
-                height: auto;
-                border-radius: 0;
-            }
-            
-            .main-content {
-                margin-left: 0;
+            .main-container {
                 padding: 16px;
-            }
-            
-            .dashboard-container {
-                flex-direction: column;
             }
             
             .header {
@@ -375,6 +312,14 @@
             
             .metrics-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 300px;
             }
         }
 
@@ -389,312 +334,338 @@
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <nav class="sidebar">
-            <div class="logo">
-                <h2>Analytics</h2>
-                <div class="subtitle">CRM Dashboard</div>
+    <div class="main-container">
+        <!-- Header -->
+        <header class="header fade-in">
+            <h1>{{ result.title }}</h1>
+            <a href="{{ url_for('index') }}" class="new-analysis-btn">
+                <i class="fas fa-plus"></i>
+                Yeni Analiz
+            </a>
+        </header>
+
+        {% if result.type == 'sales' %}
+        <!-- Sales Analysis -->
+        <div class="metrics-grid fade-in">
+            <div class="metric-card">
+                <div class="metric-label">Farklı Ürün Türü</div>
+                <div class="metric-value">{{ result.total_products }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    Çeşitlilik
+                </div>
             </div>
-            
-            <div class="nav-item">
-                <a href="{{ url_for('index') }}" class="nav-link">
+            <div class="metric-card">
+                <div class="metric-label">Toplam Satış</div>
+                <div class="metric-value">{{ result.total_sales }}</div>
+                <div class="metric-change positive">
                     <i class="fas fa-chart-line"></i>
-                    Analiz Merkezi
-                </a>
-            </div>
-            
-            <div class="nav-item {% if result.type == 'sales' %}active{% endif %}">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-chart-bar"></i>
-                    Satış Analizi
-                </a>
-            </div>
-            
-            <div class="nav-item {% if result.type == 'lift' %}active{% endif %}">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-link"></i>
-                    Lift Analizi
-                </a>
-            </div>
-            
-            <div class="nav-item {% if result.type == 'pair' %}active{% endif %}">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-users"></i>
-                    Çift Analizi
-                </a>
-            </div>
-            
-            <div class="nav-item {% if result.type == 'time' %}active{% endif %}">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-calendar-alt"></i>
-                    Zaman Analizi
-                </a>
-            </div>
-            
-            <div class="nav-item {% if result.type == 'customer' %}active{% endif %}">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-user-circle"></i>
-                    Müşteri Analizi
-                </a>
-            </div>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="header fade-in">
-                <h1>{{ result.title }}</h1>
-                <a href="{{ url_for('index') }}" class="new-analysis-btn">
-                    <i class="fas fa-plus"></i>
-                    Yeni Analiz
-                </a>
-            </header>
-
-            {% if result.type == 'sales' %}
-            <!-- Sales Analysis -->
-            <div class="metrics-grid fade-in">
-                <div class="metric-card">
-                    <div class="metric-label">Farklı Ürün Türü</div>
-                    <div class="metric-value">{{ result.total_products }}</div>
-                    <div class="metric-change positive">
-                        <i class="fas fa-arrow-up"></i>
-                        Çeşitlilik
-                    </div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Toplam Satış</div>
-                    <div class="metric-value">{{ result.total_sales }}</div>
-                    <div class="metric-change positive">
-                        <i class="fas fa-chart-line"></i>
-                        Aktif
-                    </div>
+                    Aktif
                 </div>
             </div>
-
-            <div class="content-card fade-in">
-                <h4>
+            <div class="metric-card">
+                <div class="metric-label">En Çok Satan</div>
+                <div class="metric-value">{{ result.data[0][1] }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-crown"></i>
+                    {{ result.data[0][0]|title }}
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Market Payı</div>
+                <div class="metric-value">{{ "%.1f"|format((result.data[0][1] / result.total_sales) * 100) }}%</div>
+                <div class="metric-change positive">
                     <i class="fas fa-trophy"></i>
-                    Satış Performans Sıralaması
+                    Lider
+                </div>
+            </div>
+        </div>
+
+        <div class="two-column fade-in">
+            <div class="content-card">
+                <h4>
+                    <i class="fas fa-chart-pie"></i>
+                    Satış Dağılımı
                 </h4>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Sıra</th>
-                                <th>Ürün Grubu</th>
-                                <th>Satış Sayısı</th>
-                                <th>Market Payı</th>
-                                <th>Performans</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for product, count in result.data %}
-                            <tr>
-                                <td>
-                                    <span class="rank-badge {% if loop.index <= 3 %}rank-{{ loop.index }}{% else %}rank-other{% endif %}">
-                                        {{ loop.index }}
-                                    </span>
-                                </td>
-                                <td><strong>{{ product.title() }}</strong></td>
-                                <td>{{ count }}</td>
-                                <td>{{ "%.1f"|format((count / result.total_sales) * 100) }}%</td>
-                                <td>
-                                    <div class="progress-bar-container">
-                                        <div class="progress-bar" style="width: {{ (count / result.data[0][1] * 100) }}%"></div>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="chart-container">
+                    <canvas id="salesPieChart"></canvas>
                 </div>
             </div>
 
-            {% elif result.type == 'lift' %}
-            <!-- Lift Analysis -->
-            <div class="metrics-grid fade-in">
-                <div class="metric-card">
-                    <div class="metric-label">Lift Değeri</div>
-                    <div class="metric-value">{{ result.lift }}</div>
-                    <div class="metric-change {% if result.lift > 1 %}positive{% else %}negative{% endif %}">
-                        <i class="fas fa-{% if result.lift > 1 %}arrow-up{% else %}arrow-down{% endif %}"></i>
-                        {% if result.lift > 1 %}Pozitif{% else %}Negatif{% endif %}
-                    </div>
+            <div class="content-card">
+                <h4>
+                    <i class="fas fa-chart-bar"></i>
+                    En Çok Satan 10 Ürün
+                </h4>
+                <div class="chart-container">
+                    <canvas id="salesBarChart"></canvas>
                 </div>
-                <div class="metric-card">
-                    <div class="metric-label">Güven Oranı</div>
-                    <div class="metric-value">{{ result.confidence }}</div>
-                    <div class="metric-change positive">
-                        <i class="fas fa-shield-alt"></i>
-                        Güvenilir
-                    </div>
+            </div>
+        </div>
+
+        <div class="content-card fade-in">
+            <h4>
+                <i class="fas fa-trophy"></i>
+                Detaylı Satış Raporu
+            </h4>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Sıra</th>
+                            <th>Ürün Grubu</th>
+                            <th>Satış Sayısı</th>
+                            <th>Market Payı</th>
+                            <th>Performans</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product, count in result.data[:10] %}
+                        <tr>
+                            <td>
+                                <span class="rank-badge {% if loop.index <= 3 %}rank-{{ loop.index }}{% else %}rank-other{% endif %}">
+                                    {{ loop.index }}
+                                </span>
+                            </td>
+                            <td><strong>{{ product.title() }}</strong></td>
+                            <td>{{ count }}</td>
+                            <td>{{ "%.1f"|format((count / result.total_sales) * 100) }}%</td>
+                            <td>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" style="width: {{ (count / result.data[0][1] * 100) }}%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% elif result.type == 'lift' %}
+        <!-- Lift Analysis -->
+        <div class="metrics-grid fade-in">
+            <div class="metric-card">
+                <div class="metric-label">Lift Değeri</div>
+                <div class="metric-value">{{ result.lift }}</div>
+                <div class="metric-change {% if result.lift > 1 %}positive{% else %}negative{% endif %}">
+                    <i class="fas fa-{% if result.lift > 1 %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                    {% if result.lift > 1 %}Pozitif{% else %}Negatif{% endif %}
                 </div>
-                <div class="metric-card">
-                    <div class="metric-label">Birlikte Satış</div>
-                    <div class="metric-value">{{ result.together_sales }}</div>
-                    <div class="metric-change positive">
-                        <i class="fas fa-handshake"></i>
-                        Kombinasyon
-                    </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Güven Oranı</div>
+                <div class="metric-value">{{ result.confidence }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-shield-alt"></i>
+                    Güvenilir
                 </div>
-                <div class="metric-card">
-                    <div class="metric-label">Toplam Sipariş</div>
-                    <div class="metric-value">{{ result.total_customers }}</div>
-                    <div class="metric-change positive">
-                        <i class="fas fa-shopping-cart"></i>
-                        Analiz Edilen
-                    </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Birlikte Satış</div>
+                <div class="metric-value">{{ result.together_sales }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-handshake"></i>
+                    Kombinasyon
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Toplam Sipariş</div>
+                <div class="metric-value">{{ result.total_customers }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-shopping-cart"></i>
+                    Analiz Edilen
+                </div>
+            </div>
+        </div>
+
+        <div class="two-column fade-in">
+            <div class="content-card">
+                <h4>
+                    <i class="fas fa-chart-doughnut"></i>
+                    Ürün Dağılımı
+                </h4>
+                <div class="chart-container chart-small">
+                    <canvas id="liftDoughnutChart"></canvas>
                 </div>
             </div>
 
-            <div class="content-card fade-in">
-                <div class="lift-interpretation {% if result.lift > 1.5 %}strong-positive{% elif result.lift > 1 %}positive{% elif result.lift == 1 %}neutral{% else %}negative{% endif %}">
-                    <h5>
-                        <i class="fas fa-lightbulb"></i>
-                        Analiz Yorumu: {{ result.interpretation }}
-                    </h5>
-                    <div class="row mt-3">
-                        <div class="col-md-4">
-                            <strong>{{ result.product1_sales }}</strong> sipariş<br>
-                            <small>Sadece ilk ürün</small>
-                        </div>
-                        <div class="col-md-4">
-                            <strong>{{ result.product2_sales }}</strong> sipariş<br>
-                            <small>Sadece ikinci ürün</small>
-                        </div>
-                        <div class="col-md-4">
-                            <strong>{{ result.together_sales }}</strong> sipariş<br>
-                            <small>Her iki ürün birlikte</small>
-                        </div>
+            <div class="content-card">
+                <h4>
+                    <i class="fas fa-chart-line"></i>
+                    Lift Analizi Grafiği
+                </h4>
+                <div class="chart-container chart-small">
+                    <canvas id="liftBarChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card fade-in">
+            <div class="lift-interpretation {% if result.lift > 1.5 %}strong-positive{% elif result.lift > 1 %}positive{% elif result.lift == 1 %}neutral{% else %}negative{% endif %}">
+                <h5>
+                    <i class="fas fa-lightbulb"></i>
+                    Analiz Yorumu: {{ result.interpretation }}
+                </h5>
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <strong>{{ result.product1_sales }}</strong> sipariş<br>
+                        <small>Sadece ilk ürün</small>
+                    </div>
+                    <div class="col-md-4">
+                        <strong>{{ result.product2_sales }}</strong> sipariş<br>
+                        <small>Sadece ikinci ürün</small>
+                    </div>
+                    <div class="col-md-4">
+                        <strong>{{ result.together_sales }}</strong> sipariş<br>
+                        <small>Her iki ürün birlikte</small>
                     </div>
                 </div>
             </div>
+        </div>
 
-            {% elif result.type == 'pair' %}
-            <!-- Pair Analysis -->
-            <div class="metrics-grid fade-in">
-                <div class="metric-card">
-                    <div class="metric-label">Gösterilen Çift</div>
-                    <div class="metric-value">{{ result.pairs|length }}</div>
-                    <div class="metric-change positive">
-                        <i class="fas fa-eye"></i>
-                        Top Lista
-                    </div>
+        {% elif result.type == 'pair' %}
+        <!-- Pair Analysis -->
+        <div class="metrics-grid fade-in">
+            <div class="metric-card">
+                <div class="metric-label">Gösterilen Çift</div>
+                <div class="metric-value">{{ result.pairs|length }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-eye"></i>
+                    Top Lista
                 </div>
-                <div class="metric-card">
-                    <div class="metric-label">Toplam Çift</div>
-                    <div class="metric-value">{{ result.total_pairs }}</div>
-                    <div class="metric-change positive">
-                        <i class="fas fa-link"></i>
-                        Keşfedilen
-                    </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Toplam Çift</div>
+                <div class="metric-value">{{ result.total_pairs }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-link"></i>
+                    Keşfedilen
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">En Popüler</div>
+                <div class="metric-value">{{ result.pairs[0].count if result.pairs else 0 }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-star"></i>
+                    Birlikte Satış
+                </div>
+            </div>
+        </div>
+
+        <div class="two-column fade-in">
+            <div class="content-card">
+                <h4>
+                    <i class="fas fa-chart-bar"></i>
+                    En Çok Birlikte Satılanlar
+                </h4>
+                <div class="chart-container">
+                    <canvas id="pairBarChart"></canvas>
                 </div>
             </div>
 
-            <div class="content-card fade-in">
+            <div class="content-card">
                 <h4>
                     <i class="fas fa-users"></i>
-                    En Popüler Ürün Kombinasyonları
+                    Popüler Kombinasyonlar
                 </h4>
-                {% for pair in result.pairs %}
+                {% for pair in result.pairs[:8] %}
                 <div class="pair-item">
                     <div class="pair-products">{{ pair.products }}</div>
                     <div class="pair-count">{{ pair.count }} birlikte</div>
                 </div>
                 {% endfor %}
             </div>
+        </div>
 
-            {% elif result.type == 'time' %}
-            <!-- Time Analysis -->
-            <div class="metrics-grid fade-in">
-                <div class="metric-card">
-                    <div class="metric-label">Analiz Edilen Ay</div>
-                    <div class="metric-value">{{ result.total_months }}</div>
-                    <div class="metric-change positive">
-                        <i class="fas fa-calendar"></i>
-                        Dönem
-                    </div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Toplam Satış</div>
-                    <div class="metric-value">{{ result.data|sum(attribute=1) }}</div>
-                    <div class="metric-change positive">
-                        <i class="fas fa-chart-line"></i>
-                        Kümülatif
-                    </div>
+        {% elif result.type == 'time' %}
+        <!-- Time Analysis -->
+        <div class="metrics-grid fade-in">
+            <div class="metric-card">
+                <div class="metric-label">Analiz Edilen Ay</div>
+                <div class="metric-value">{{ result.total_months }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-calendar"></i>
+                    Dönem
                 </div>
             </div>
+            <div class="metric-card">
+                <div class="metric-label">Toplam Satış</div>
+                <div class="metric-value">{{ result.data|sum(attribute=1) }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-chart-line"></i>
+                    Kümülatif
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Aylık Ortalama</div>
+                <div class="metric-value">{{ "%.0f"|format(result.data|sum(attribute=1) / result.total_months) }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-calculator"></i>
+                    Ortalama
+                </div>
+            </div>
+        </div>
 
-            <div class="content-card fade-in">
+        <div class="content-card fade-in">
+            <h4>
+                <i class="fas fa-chart-line"></i>
+                Zaman Serisi Analizi
+            </h4>
+            <div class="chart-container">
+                <canvas id="timeLineChart"></canvas>
+            </div>
+        </div>
+
+        {% elif result.type == 'customer' %}
+        <!-- Customer Analysis -->
+        <div class="metrics-grid fade-in">
+            <div class="metric-card">
+                <div class="metric-label">Toplam Müşteri</div>
+                <div class="metric-value">{{ result.total_customers }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-users"></i>
+                    Aktif
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Ort. Ürün/Müşteri</div>
+                <div class="metric-value">{{ result.avg_products_per_customer }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-shopping-bag"></i>
+                    Sepet Büyüklüğü
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Ort. Çeşit/Müşteri</div>
+                <div class="metric-value">{{ result.avg_variety_per_customer }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-layer-group"></i>
+                    Çeşitlilik
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Maksimum Ürün</div>
+                <div class="metric-value">{{ result.max_products }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-crown"></i>
+                    VIP Müşteri
+                </div>
+            </div>
+        </div>
+
+        <div class="two-column fade-in">
+            <div class="content-card">
                 <h4>
-                    <i class="fas fa-calendar-alt"></i>
-                    Aylık Satış Performansı
+                    <i class="fas fa-chart-radar"></i>
+                    Müşteri Metrikleri
                 </h4>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Ay</th>
-                                <th>Satış Sayısı</th>
-                                <th>Trend</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for month, sales in result.data %}
-                            <tr>
-                                <td><strong>{{ month }}</strong></td>
-                                <td>{{ sales }}</td>
-                                <td>
-                                    <div class="progress-bar-container">
-                                        <div class="progress-bar" style="width: {{ (sales / result.data|max(attribute=1) * 100) }}%"></div>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="chart-container chart-small">
+                    <canvas id="customerRadarChart"></canvas>
                 </div>
             </div>
 
-            {% elif result.type == 'customer' %}
-            <!-- Customer Analysis -->
-            <div class="metrics-grid fade-in">
-                <div class="metric-card">
-                    <div class="metric-label">Toplam Müşteri</div>
-                    <div class="metric-value">{{ result.total_customers }}</div>
-                    <div class="metric-change positive">
-                        <i class="fas fa-users"></i>
-                        Aktif
-                    </div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Ort. Ürün/Müşteri</div>
-                    <div class="metric-value">{{ result.avg_products_per_customer }}</div>
-                    <div class="metric-change positive">
-                        <i class="fas fa-shopping-bag"></i>
-                        Sepet Büyüklüğü
-                    </div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Ort. Çeşit/Müşteri</div>
-                    <div class="metric-value">{{ result.avg_variety_per_customer }}</div>
-                    <div class="metric-change positive">
-                        <i class="fas fa-layer-group"></i>
-                        Çeşitlilik
-                    </div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Maksimum Ürün</div>
-                    <div class="metric-value">{{ result.max_products }}</div>
-                    <div class="metric-change positive">
-                        <i class="fas fa-crown"></i>
-                        VIP Müşteri
-                    </div>
-                </div>
-            </div>
-
-            <div class="content-card fade-in">
+            <div class="content-card">
                 <div class="lift-interpretation positive">
                     <h5>
                         <i class="fas fa-user-tie"></i>
@@ -706,12 +677,313 @@
                        <strong>{{ result.max_variety }}</strong> farklı kategoriyi denemiş.</p>
                 </div>
             </div>
-            {% endif %}
-        </main>
+        </div>
+        {% endif %}
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Chart.js default configuration
+        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif';
+        Chart.defaults.color = '#4a5568';
+
+        // Color palette
+        const colors = {
+            primary: '#48bb78',
+            secondary: '#38a169',
+            accent: '#68d391',
+            danger: '#f56565',
+            warning: '#ed8936',
+            info: '#4299e1',
+            gradient: ['#48bb78', '#38a169', '#68d391', '#9ae6b4', '#c6f6d5']
+        };
+
+        {% if result.type == 'sales' %}
+        // Sales Pie Chart
+        const salesPieCtx = document.getElementById('salesPieChart').getContext('2d');
+        new Chart(salesPieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [{% for product, count in result.data[:6] %}'{{ product|title }}'{% if not loop.last %},{% endif %}{% endfor %}],
+                datasets: [{
+                    data: [{% for product, count in result.data[:6] %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}],
+                    backgroundColor: [
+                        '#48bb78', '#38a169', '#68d391', '#9ae6b4', '#c6f6d5', '#f0fff4'
+                    ],
+                    borderWidth: 3,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+
+        // Sales Bar Chart
+        const salesBarCtx = document.getElementById('salesBarChart').getContext('2d');
+        new Chart(salesBarCtx, {
+            type: 'bar',
+            data: {
+                labels: [{% for product, count in result.data[:10] %}'{{ product|title }}'{% if not loop.last %},{% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Satış Sayısı',
+                    data: [{% for product, count in result.data[:10] %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}],
+                    backgroundColor: '#48bb78',
+                    borderColor: '#38a169',
+                    borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#e2e8f0'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        {% elif result.type == 'lift' %}
+        // Lift Doughnut Chart
+        const liftDoughnutCtx = document.getElementById('liftDoughnutChart').getContext('2d');
+        new Chart(liftDoughnutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Sadece Ürün 1', 'Sadece Ürün 2', 'Her İki Ürün', 'Diğer'],
+                datasets: [{
+                    data: [
+                        {{ result.product1_sales - result.together_sales }},
+                        {{ result.product2_sales - result.together_sales }},
+                        {{ result.together_sales }},
+                        {{ result.total_customers - result.product1_sales - result.product2_sales + result.together_sales }}
+                    ],
+                    backgroundColor: ['#4299e1', '#ed8936', '#48bb78', '#e2e8f0'],
+                    borderWidth: 3,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+
+        // Lift Bar Chart
+        const liftBarCtx = document.getElementById('liftBarChart').getContext('2d');
+        new Chart(liftBarCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Lift Değeri', 'Güven Oranı', 'Beklenen', 'Gerçek'],
+                datasets: [{
+                    label: 'Değerler',
+                    data: [{{ result.lift }}, {{ result.confidence }}, 1.0, {{ result.lift }}],
+                    backgroundColor: ['{{ "#48bb78" if result.lift > 1 else "#f56565" }}', '#4299e1', '#e2e8f0', '{{ "#48bb78" if result.lift > 1 else "#f56565" }}'],
+                    borderRadius: 8,
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#e2e8f0'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        {% elif result.type == 'pair' %}
+        // Pair Bar Chart
+        const pairBarCtx = document.getElementById('pairBarChart').getContext('2d');
+        new Chart(pairBarCtx, {
+            type: 'horizontalBar',
+            data: {
+                labels: [{% for pair in result.pairs[:8] %}'{{ pair.products }}'{% if not loop.last %},{% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Birlikte Satış',
+                    data: [{% for pair in result.pairs[:8] %}{{ pair.count }}{% if not loop.last %},{% endif %}{% endfor %}],
+                    backgroundColor: '#48bb78',
+                    borderColor: '#38a169',
+                    borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#e2e8f0'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        {% elif result.type == 'time' %}
+        // Time Line Chart
+        const timeLineCtx = document.getElementById('timeLineChart').getContext('2d');
+        new Chart(timeLineCtx, {
+            type: 'line',
+            data: {
+                labels: [{% for month, sales in result.data %}'{{ month }}'{% if not loop.last %},{% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Aylık Satış',
+                    data: [{% for month, sales in result.data %}{{ sales }}{% if not loop.last %},{% endif %}{% endfor %}],
+                    borderColor: '#48bb78',
+                    backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#48bb78',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 3,
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#e2e8f0'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+
+        {% elif result.type == 'customer' %}
+        // Customer Radar Chart
+        const customerRadarCtx = document.getElementById('customerRadarChart').getContext('2d');
+        new Chart(customerRadarCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Ortalama Ürün', 'Ortalama Çeşit', 'Maksimum Ürün', 'Maksimum Çeşit', 'Müşteri Sayısı'],
+                datasets: [{
+                    label: 'Müşteri Metrikleri',
+                    data: [
+                        {{ result.avg_products_per_customer }},
+                        {{ result.avg_variety_per_customer }},
+                        {{ result.max_products / 10 }},
+                        {{ result.max_variety }},
+                        {{ result.total_customers / 10 }}
+                    ],
+                    backgroundColor: 'rgba(72, 187, 120, 0.2)',
+                    borderColor: '#48bb78',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#48bb78',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#e2e8f0'
+                        },
+                        angleLines: {
+                            color: '#e2e8f0'
+                        },
+                        pointLabels: {
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+
         // Progress bar animation
         document.addEventListener('DOMContentLoaded', function() {
             const progressBars = document.querySelectorAll('.progress-bar');
