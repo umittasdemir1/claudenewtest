@@ -297,7 +297,7 @@
                 <div class="stat-icon">
                     <i class="fas fa-chart-line"></i>
                 </div>
-                <div class="stat-number">5</div>
+                <div class="stat-number">7</div>
                 <div class="stat-label">Analiz Türü</div>
             </div>
             <div class="stat-card">
@@ -374,11 +374,13 @@
                         Analiz Türü Seçin
                     </h3>
                     <select name="analysis" class="form-select" id="analysisType" onchange="toggleLiftInputs()">
-                        <option value="sales">📈 Ürün Satış Analizi - En çok satan ürünleri gösterir</option>
-                        <option value="lift">🔗 Lift Analizi - İki ürün arasındaki korelasyonu ölçer</option>
+                        <option value="sales">📈 Ürün Kategori Analizi - Ürün grubu bazında satış</option>
+                        <option value="product_detail">🏷️ Detaylı Ürün Analizi - Ürün adı bazında performans</option>
+                        <option value="sales_rep">👨‍💼 Satış Sorumlusu Performansı - Takım analizi</option>
+                        <option value="lift">🔗 Lift Analizi - İki ürün arasındaki korelasyon</option>
                         <option value="pair">👥 Birlikte Satılan Ürünler - Market basket analizi</option>
                         <option value="time">📅 Zaman Bazlı Satış - Aylık satış trendleri</option>
-                        <option value="customer">👤 Müşteri Tipi Analizi - Müşteri davranış analizi</option>
+                        <option value="customer">👤 Müşteri Analizi - Müşteri davranış analizi</option>
                     </select>
 
                     <!-- Lift Analysis Inputs -->
@@ -425,7 +427,15 @@
                 </li>
                 <li>
                     <i class="fas fa-check"></i>
-                    <strong>C Sütunu - Tarih:</strong> Satış tarihi (sadece zaman analizi için)
+                    <strong>F Sütunu - Ürün Adı:</strong> Detaylı ürün açıklaması (Detaylı analiz için)
+                </li>
+                <li>
+                    <i class="fas fa-check"></i>
+                    <strong>H Sütunu - Satış Sorumlusu:</strong> Satış temsilcisi adı (Performans analizi için)
+                </li>
+                <li>
+                    <i class="fas fa-check"></i>
+                    <strong>C Sütunu - Tarih:</strong> Satış tarihi (Zaman analizi için)
                 </li>
             </ul>
         </div>
