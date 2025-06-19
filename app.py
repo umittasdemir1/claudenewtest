@@ -78,9 +78,18 @@ def analyze():
         
         # Gerekli sütunları kontrol et
         sample_row = data[0]
-        if 'Numara' not in sample_row or 'Ürün Grubu' not in sample_row:
+        required_columns = ['Numara', 'Ürün Grubu']
+        
+        # Analiz türüne göre ek sütun gereksinimleri
+        if analysis_type in ['product_detail']:
+            required_columns.append('Madde Açıklaması')
+        elif analysis_type in ['sales_rep']:
+            required_columns.append('Satış Sorumlusu Adı-Soyadı')
+        
+        missing_columns = [col for col in required_columns if col not in sample_row]
+        if missing_columns:
             available_columns = list(sample_row.keys())
-            flash(f'Excel dosyasında "Numara" ve "Ürün Grubu" sütunları bulunamadı! Mevcut sütunlar: {", ".join(available_columns)}', 'error')
+            flash(f'Excel dosyasında şu sütunlar bulunamadı: {", ".join(missing_columns)}! Mevcut sütunlar: {", ".join(available_columns)}', 'error')
             return redirect(url_for('index'))
         
         # Veriyi temizle
@@ -92,10 +101,23 @@ def analyze():
                     'Numara': str(row['Numara']).strip(),
                     'Ürün Grubu': str(row['Ürün Grubu']).upper().strip()
                 }
+                
+                # Ürün adı (Madde Açıklaması)
+                if 'Madde Açıklaması' in row and row['Madde Açıklaması']:
+                    clean_row['Ürün Adı'] = str(row['Madde Açıklaması']).strip()
+                
+                # Satış sorumlusu
+                if 'Satış Sorumlusu Adı-Soyadı' in row and row['Satış Sorumlusu Adı-Soyadı']:
+                    clean_row['Satış Sorumlusu'] = str(row['Satış Sorumlusu Adı-Soyadı']).strip()
+                
+                # Tarih
                 if 'Tarih' in row and row['Tarih']:
                     clean_row['Tarih'] = row['Tarih']
+                
+                # Müşteri
                 if 'Perakende Müşteri Kodu' in row and row['Perakende Müşteri Kodu']:
                     clean_row['Müşteri'] = str(row['Perakende Müşteri Kodu']).strip()
+                
                 clean_data.append(clean_row)
         
         if not clean_data:
@@ -115,6 +137,88 @@ def analyze():
                 'data': list(product_counts.most_common()),
                 'total_products': len(product_counts),
                 'total_sales': total_sales
+            }
+            
+        elif analysis_type == 'product_detail':
+            # Ürün adı bazında detaylı analiz
+            product_name_counts = Counter(row['Ürün Adı'] for row in clean_data if 'Ürün Adı' in row)
+            product_group_mapping = {}
+            
+            # Ürün adı ile grup eşleştirmesi
+            for row in clean_data:
+                if 'Ürün Adı' in row:
+                    product_name = row['Ürün Adı']
+                    product_group = row['Ürün Grubu']
+                    if product_name not in product_group_mapping:
+                        product_group_mapping[product_name] = product_group
+            
+            total_sales = sum(product_name_counts.values())
+            top_products = product_name_counts.most_common(20)
+            
+            # Kategori bazında dağılım
+            category_analysis = defaultdict(list)
+            for product_name, count in top_products:
+                group = product_group_mapping.get(product_name, 'Bilinmiyor')
+                category_analysis[group].append({
+                    'name': product_name,
+                    'count': count,
+                    'percentage': round((count / total_sales) * 100, 1)
+                })
+            
+            result_data = {
+                'type': 'product_detail',
+                'title': 'Detaylı Ürün Performans Analizi',
+                'top_products': top_products,
+                'total_products': len(product_name_counts),
+                'total_sales': total_sales,
+                'category_analysis': dict(category_analysis),
+                'product_group_mapping': product_group_mapping
+            }
+            
+        elif analysis_type == 'sales_rep':
+            # Satış sorumlusu performans analizi
+            rep_performance = defaultdict(lambda: {
+                'total_sales': 0,
+                'unique_customers': set(),
+                'unique_products': set(),
+                'orders': set()
+            })
+            
+            for row in clean_data:
+                if 'Satış Sorumlusu' in row:
+                    rep = row['Satış Sorumlusu']
+                    rep_performance[rep]['total_sales'] += 1
+                    rep_performance[rep]['orders'].add(row['Numara'])
+                    rep_performance[rep]['unique_products'].add(row['Ürün Grubu'])
+                    
+                    if 'Müşteri' in row:
+                        rep_performance[rep]['unique_customers'].add(row['Müşteri'])
+            
+            # Sonuçları hazırla
+            rep_results = []
+            for rep, stats in rep_performance.items():
+                rep_results.append({
+                    'name': rep,
+                    'total_sales': stats['total_sales'],
+                    'unique_customers': len(stats['unique_customers']),
+                    'unique_products': len(stats['unique_products']),
+                    'orders': len(stats['orders']),
+                    'avg_products_per_order': round(stats['total_sales'] / len(stats['orders']), 1) if stats['orders'] else 0
+                })
+            
+            # Performansa göre sırala
+            rep_results.sort(key=lambda x: x['total_sales'], reverse=True)
+            
+            total_reps = len(rep_results)
+            total_sales_all = sum(r['total_sales'] for r in rep_results)
+            
+            result_data = {
+                'type': 'sales_rep',
+                'title': 'Satış Sorumlusu Performans Analizi',
+                'representatives': rep_results,
+                'total_reps': total_reps,
+                'total_sales': total_sales_all,
+                'avg_sales_per_rep': round(total_sales_all / total_reps, 1) if total_reps > 0 else 0
             }
             
         elif analysis_type == 'lift':
