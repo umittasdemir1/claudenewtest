@@ -222,66 +222,21 @@
             color: #718096;
         }
 
-        .pair-item {
-            background: linear-gradient(135deg, #f7fafc, #edf2f7);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-            border-left: 4px solid #48bb78;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.6em;
+            font-size: 0.75em;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.375rem;
         }
 
-        .pair-item:hover {
-            transform: translateX(4px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .pair-products {
-            font-weight: 600;
-            color: #2d3748;
-        }
-
-        .pair-count {
-            background: linear-gradient(135deg, #48bb78, #38a169);
+        .bg-success {
+            background-color: #48bb78 !important;
             color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .lift-interpretation {
-            padding: 24px;
-            border-radius: 16px;
-            margin-top: 24px;
-            border-left: 4px solid;
-        }
-
-        .lift-interpretation.strong-positive {
-            background: rgba(72, 187, 120, 0.1);
-            border-color: #48bb78;
-            color: #2f855a;
-        }
-
-        .lift-interpretation.positive {
-            background: rgba(66, 153, 225, 0.1);
-            border-color: #4299e1;
-            color: #2b6cb0;
-        }
-
-        .lift-interpretation.neutral {
-            background: rgba(237, 137, 54, 0.1);
-            border-color: #ed8936;
-            color: #c05621;
-        }
-
-        .lift-interpretation.negative {
-            background: rgba(245, 101, 101, 0.1);
-            border-color: #f56565;
-            color: #c53030;
         }
 
         .progress-bar-container {
@@ -403,36 +358,97 @@
             </div>
         </div>
 
+        {% elif result.type == 'product_detail' %}
+        <!-- Product Detail Analysis -->
+        <div class="metrics-grid fade-in">
+            <div class="metric-card">
+                <div class="metric-label">Toplam Ürün Çeşidi</div>
+                <div class="metric-value">{{ result.total_products }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-box"></i>
+                    Çeşitlilik
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Toplam Satış</div>
+                <div class="metric-value">{{ result.total_sales }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-chart-line"></i>
+                    Aktif
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">En Çok Satan Ürün</div>
+                <div class="metric-value">{{ result.top_products[0][1] }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-crown"></i>
+                    Satış
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Kategori Sayısı</div>
+                <div class="metric-value">{{ result.category_analysis|length }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-tags"></i>
+                    Grup
+                </div>
+            </div>
+        </div>
+
+        <div class="two-column fade-in">
+            <div class="content-card">
+                <h4>
+                    <i class="fas fa-chart-bar"></i>
+                    En Çok Satan 10 Ürün
+                </h4>
+                <div class="chart-container">
+                    <canvas id="productDetailBarChart"></canvas>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <h4>
+                    <i class="fas fa-chart-pie"></i>
+                    Kategori Bazında Dağılım
+                </h4>
+                <div class="chart-container">
+                    <canvas id="categoryPieChart"></canvas>
+                </div>
+            </div>
+        </div>
+
         <div class="content-card fade-in">
             <h4>
                 <i class="fas fa-trophy"></i>
-                Detaylı Satış Raporu
+                Top 20 Ürün Performansı
             </h4>
             <div class="table-responsive">
                 <table class="table">
                     <thead>
                         <tr>
                             <th>Sıra</th>
-                            <th>Ürün Grubu</th>
-                            <th>Satış Sayısı</th>
-                            <th>Market Payı</th>
+                            <th>Ürün Adı</th>
+                            <th>Kategori</th>
+                            <th>Satış</th>
+                            <th>Pay (%)</th>
                             <th>Performans</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for product, count in result.data[:10] %}
+                        {% for product_name, count in result.top_products[:20] %}
                         <tr>
                             <td>
                                 <span class="rank-badge {% if loop.index <= 3 %}rank-{{ loop.index }}{% else %}rank-other{% endif %}">
                                     {{ loop.index }}
                                 </span>
                             </td>
-                            <td><strong>{{ product.title() }}</strong></td>
+                            <td><strong>{{ product_name[:50] }}{% if product_name|length > 50 %}...{% endif %}</strong></td>
+                            <td><span class="badge bg-success">{{ result.product_group_mapping.get(product_name, 'N/A') }}</span></td>
                             <td>{{ count }}</td>
                             <td>{{ "%.1f"|format((count / result.total_sales) * 100) }}%</td>
                             <td>
                                 <div class="progress-bar-container">
-                                    <div class="progress-bar" style="width: {{ (count / result.data[0][1] * 100) }}%"></div>
+                                    <div class="progress-bar" style="width: {{ (count / result.top_products[0][1] * 100) }}%"></div>
                                 </div>
                             </td>
                         </tr>
@@ -442,113 +458,39 @@
             </div>
         </div>
 
-        {% elif result.type == 'lift' %}
-        <!-- Lift Analysis -->
+        {% elif result.type == 'sales_rep' %}
+        <!-- Sales Representative Analysis -->
         <div class="metrics-grid fade-in">
             <div class="metric-card">
-                <div class="metric-label">Lift Değeri</div>
-                <div class="metric-value">{{ result.lift }}</div>
-                <div class="metric-change {% if result.lift > 1 %}positive{% else %}negative{% endif %}">
-                    <i class="fas fa-{% if result.lift > 1 %}arrow-up{% else %}arrow-down{% endif %}"></i>
-                    {% if result.lift > 1 %}Pozitif{% else %}Negatif{% endif %}
+                <div class="metric-label">Toplam Satış Sorumlusu</div>
+                <div class="metric-value">{{ result.total_reps }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-users"></i>
+                    Aktif Takım
                 </div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Güven Oranı</div>
-                <div class="metric-value">{{ result.confidence }}</div>
+                <div class="metric-label">Toplam Satış</div>
+                <div class="metric-value">{{ result.total_sales }}</div>
                 <div class="metric-change positive">
-                    <i class="fas fa-shield-alt"></i>
-                    Güvenilir
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Birlikte Satış</div>
-                <div class="metric-value">{{ result.together_sales }}</div>
-                <div class="metric-change positive">
-                    <i class="fas fa-handshake"></i>
-                    Kombinasyon
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Toplam Sipariş</div>
-                <div class="metric-value">{{ result.total_customers }}</div>
-                <div class="metric-change positive">
-                    <i class="fas fa-shopping-cart"></i>
-                    Analiz Edilen
-                </div>
-            </div>
-        </div>
-
-        <div class="two-column fade-in">
-            <div class="content-card">
-                <h4>
-                    <i class="fas fa-chart-doughnut"></i>
-                    Ürün Dağılımı
-                </h4>
-                <div class="chart-container chart-small">
-                    <canvas id="liftDoughnutChart"></canvas>
-                </div>
-            </div>
-
-            <div class="content-card">
-                <h4>
                     <i class="fas fa-chart-line"></i>
-                    Lift Analizi Grafiği
-                </h4>
-                <div class="chart-container chart-small">
-                    <canvas id="liftBarChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <div class="content-card fade-in">
-            <div class="lift-interpretation {% if result.lift > 1.5 %}strong-positive{% elif result.lift > 1 %}positive{% elif result.lift == 1 %}neutral{% else %}negative{% endif %}">
-                <h5>
-                    <i class="fas fa-lightbulb"></i>
-                    Analiz Yorumu: {{ result.interpretation }}
-                </h5>
-                <div class="row mt-3">
-                    <div class="col-md-4">
-                        <strong>{{ result.product1_sales }}</strong> sipariş<br>
-                        <small>Sadece ilk ürün</small>
-                    </div>
-                    <div class="col-md-4">
-                        <strong>{{ result.product2_sales }}</strong> sipariş<br>
-                        <small>Sadece ikinci ürün</small>
-                    </div>
-                    <div class="col-md-4">
-                        <strong>{{ result.together_sales }}</strong> sipariş<br>
-                        <small>Her iki ürün birlikte</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {% elif result.type == 'pair' %}
-        <!-- Pair Analysis -->
-        <div class="metrics-grid fade-in">
-            <div class="metric-card">
-                <div class="metric-label">Gösterilen Çift</div>
-                <div class="metric-value">{{ result.pairs|length }}</div>
-                <div class="metric-change positive">
-                    <i class="fas fa-eye"></i>
-                    Top Lista
+                    Kümülatif
                 </div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Toplam Çift</div>
-                <div class="metric-value">{{ result.total_pairs }}</div>
+                <div class="metric-label">Ortalama Satış</div>
+                <div class="metric-value">{{ result.avg_sales_per_rep }}</div>
                 <div class="metric-change positive">
-                    <i class="fas fa-link"></i>
-                    Keşfedilen
+                    <i class="fas fa-calculator"></i>
+                    Kişi Başı
                 </div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">En Popüler</div>
-                <div class="metric-value">{{ result.pairs[0].count if result.pairs else 0 }}</div>
+                <div class="metric-label">En Yüksek Performans</div>
+                <div class="metric-value">{{ result.representatives[0].total_sales if result.representatives else 0 }}</div>
                 <div class="metric-change positive">
-                    <i class="fas fa-star"></i>
-                    Birlikte Satış
+                    <i class="fas fa-trophy"></i>
+                    En İyi
                 </div>
             </div>
         </div>
@@ -557,125 +499,66 @@
             <div class="content-card">
                 <h4>
                     <i class="fas fa-chart-bar"></i>
-                    En Çok Birlikte Satılanlar
+                    Satış Sorumlusu Performansı
                 </h4>
                 <div class="chart-container">
-                    <canvas id="pairBarChart"></canvas>
+                    <canvas id="salesRepBarChart"></canvas>
                 </div>
             </div>
 
             <div class="content-card">
                 <h4>
-                    <i class="fas fa-users"></i>
-                    Popüler Kombinasyonlar
+                    <i class="fas fa-chart-doughnut"></i>
+                    Satış Dağılımı
                 </h4>
-                {% for pair in result.pairs[:8] %}
-                <div class="pair-item">
-                    <div class="pair-products">{{ pair.products }}</div>
-                    <div class="pair-count">{{ pair.count }} birlikte</div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        {% elif result.type == 'time' %}
-        <!-- Time Analysis -->
-        <div class="metrics-grid fade-in">
-            <div class="metric-card">
-                <div class="metric-label">Analiz Edilen Ay</div>
-                <div class="metric-value">{{ result.total_months }}</div>
-                <div class="metric-change positive">
-                    <i class="fas fa-calendar"></i>
-                    Dönem
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Toplam Satış</div>
-                <div class="metric-value">{{ result.data|sum(attribute=1) }}</div>
-                <div class="metric-change positive">
-                    <i class="fas fa-chart-line"></i>
-                    Kümülatif
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Aylık Ortalama</div>
-                <div class="metric-value">{{ "%.0f"|format(result.data|sum(attribute=1) / result.total_months) }}</div>
-                <div class="metric-change positive">
-                    <i class="fas fa-calculator"></i>
-                    Ortalama
+                <div class="chart-container">
+                    <canvas id="salesRepPieChart"></canvas>
                 </div>
             </div>
         </div>
 
         <div class="content-card fade-in">
             <h4>
-                <i class="fas fa-chart-line"></i>
-                Zaman Serisi Analizi
+                <i class="fas fa-medal"></i>
+                Satış Sorumlusu Detaylı Performans
             </h4>
-            <div class="chart-container">
-                <canvas id="timeLineChart"></canvas>
-            </div>
-        </div>
-
-        {% elif result.type == 'customer' %}
-        <!-- Customer Analysis -->
-        <div class="metrics-grid fade-in">
-            <div class="metric-card">
-                <div class="metric-label">Toplam Müşteri</div>
-                <div class="metric-value">{{ result.total_customers }}</div>
-                <div class="metric-change positive">
-                    <i class="fas fa-users"></i>
-                    Aktif
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Ort. Ürün/Müşteri</div>
-                <div class="metric-value">{{ result.avg_products_per_customer }}</div>
-                <div class="metric-change positive">
-                    <i class="fas fa-shopping-bag"></i>
-                    Sepet Büyüklüğü
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Ort. Çeşit/Müşteri</div>
-                <div class="metric-value">{{ result.avg_variety_per_customer }}</div>
-                <div class="metric-change positive">
-                    <i class="fas fa-layer-group"></i>
-                    Çeşitlilik
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Maksimum Ürün</div>
-                <div class="metric-value">{{ result.max_products }}</div>
-                <div class="metric-change positive">
-                    <i class="fas fa-crown"></i>
-                    VIP Müşteri
-                </div>
-            </div>
-        </div>
-
-        <div class="two-column fade-in">
-            <div class="content-card">
-                <h4>
-                    <i class="fas fa-chart-radar"></i>
-                    Müşteri Metrikleri
-                </h4>
-                <div class="chart-container chart-small">
-                    <canvas id="customerRadarChart"></canvas>
-                </div>
-            </div>
-
-            <div class="content-card">
-                <div class="lift-interpretation positive">
-                    <h5>
-                        <i class="fas fa-user-tie"></i>
-                        Müşteri Profili Analizi
-                    </h5>
-                    <p>Müşterileriniz ortalama <strong>{{ result.avg_products_per_customer }}</strong> ürün alıyor ve 
-                       <strong>{{ result.avg_variety_per_customer }}</strong> farklı ürün türü tercih ediyor.</p>
-                    <p>En aktif müşteriniz <strong>{{ result.max_products }}</strong> ürün almış ve 
-                       <strong>{{ result.max_variety }}</strong> farklı kategoriyi denemiş.</p>
-                </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Sıra</th>
+                            <th>Satış Sorumlusu</th>
+                            <th>Toplam Satış</th>
+                            <th>Müşteri Sayısı</th>
+                            <th>Ürün Çeşidi</th>
+                            <th>Sipariş Sayısı</th>
+                            <th>Ortalama/Sipariş</th>
+                            <th>Performans</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rep in result.representatives %}
+                        <tr>
+                            <td>
+                                <span class="rank-badge {% if loop.index <= 3 %}rank-{{ loop.index }}{% else %}rank-other{% endif %}">
+                                    {{ loop.index }}
+                                </span>
+                            </td>
+                            <td><strong>{{ rep.name }}</strong></td>
+                            <td>{{ rep.total_sales }}</td>
+                            <td>{{ rep.unique_customers }}</td>
+                            <td>{{ rep.unique_products }}</td>
+                            <td>{{ rep.orders }}</td>
+                            <td>{{ rep.avg_products_per_order }}</td>
+                            <td>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" style="width: {{ (rep.total_sales / result.representatives[0].total_sales * 100) if result.representatives else 0 }}%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
         {% endif %}
@@ -768,21 +651,65 @@
             }
         });
 
-        {% elif result.type == 'lift' %}
-        // Lift Doughnut Chart
-        const liftDoughnutCtx = document.getElementById('liftDoughnutChart').getContext('2d');
-        new Chart(liftDoughnutCtx, {
+        {% elif result.type == 'product_detail' %}
+        // Product Detail Bar Chart
+        const productDetailBarCtx = document.getElementById('productDetailBarChart').getContext('2d');
+        new Chart(productDetailBarCtx, {
+            type: 'bar',
+            data: {
+                labels: [{% for product_name, count in result.top_products[:10] %}'{{ product_name[:30] }}{% if product_name|length > 30 %}...{% endif %}'{% if not loop.last %},{% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Satış Sayısı',
+                    data: [{% for product_name, count in result.top_products[:10] %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}],
+                    backgroundColor: '#48bb78',
+                    borderColor: '#38a169',
+                    borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#e2e8f0'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+
+        // Category Pie Chart
+        const categoryPieCtx = document.getElementById('categoryPieChart').getContext('2d');
+        const categoryData = {};
+        {% for category, products in result.category_analysis.items() %}
+        categoryData['{{ category }}'] = {{ products|sum(attribute='count') }};
+        {% endfor %}
+        
+        new Chart(categoryPieCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Sadece Ürün 1', 'Sadece Ürün 2', 'Her İki Ürün', 'Diğer'],
+                labels: Object.keys(categoryData),
                 datasets: [{
-                    data: [
-                        {{ result.product1_sales - result.together_sales }},
-                        {{ result.product2_sales - result.together_sales }},
-                        {{ result.together_sales }},
-                        {{ result.total_customers - result.product1_sales - result.product2_sales + result.together_sales }}
+                    data: Object.values(categoryData),
+                    backgroundColor: [
+                        '#48bb78', '#38a169', '#68d391', '#9ae6b4', '#c6f6d5', '#f0fff4'
                     ],
-                    backgroundColor: ['#4299e1', '#ed8936', '#48bb78', '#e2e8f0'],
                     borderWidth: 3,
                     borderColor: '#ffffff'
                 }]
@@ -802,18 +729,61 @@
             }
         });
 
-        // Lift Bar Chart
-        const liftBarCtx = document.getElementById('liftBarChart').getContext('2d');
-        new Chart(liftBarCtx, {
+        {% elif result.type == 'sales_rep' %}
+        // Sales Rep Bar Chart
+        const salesRepBarCtx = document.getElementById('salesRepBarChart').getContext('2d');
+        new Chart(salesRepBarCtx, {
             type: 'bar',
             data: {
-                labels: ['Lift Değeri', 'Güven Oranı', 'Beklenen', 'Gerçek'],
+                labels: [{% for rep in result.representatives[:10] %}'{{ rep.name }}'{% if not loop.last %},{% endif %}{% endfor %}],
                 datasets: [{
-                    label: 'Değerler',
-                    data: [{{ result.lift }}, {{ result.confidence }}, 1.0, {{ result.lift }}],
-                    backgroundColor: ['{{ "#48bb78" if result.lift > 1 else "#f56565" }}', '#4299e1', '#e2e8f0', '{{ "#48bb78" if result.lift > 1 else "#f56565" }}'],
-                    borderRadius: 8,
+                    label: 'Toplam Satış',
+                    data: [{% for rep in result.representatives[:10] %}{{ rep.total_sales }}{% if not loop.last %},{% endif %}{% endfor %}],
+                    backgroundColor: '#48bb78',
+                    borderColor: '#38a169',
                     borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#e2e8f0'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+
+        // Sales Rep Pie Chart
+        const salesRepPieCtx = document.getElementById('salesRepPieChart').getContext('2d');
+        new Chart(salesRepPieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [{% for rep in result.representatives[:6] %}'{{ rep.name }}'{% if not loop.last %},{% endif %}{% endfor %}],
+                datasets: [{
+                    data: [{% for rep in result.representatives[:6] %}{{ rep.total_sales }}{% if not loop.last %},{% endif %}{% endfor %}],
+                    backgroundColor: [
+                        '#48bb78', '#38a169', '#68d391', '#9ae6b4', '#c6f6d5', '#f0fff4'
+                    ],
+                    borderWidth: 3,
                     borderColor: '#ffffff'
                 }]
             },
@@ -822,187 +792,16 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: '#e2e8f0'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
-
-        {% elif result.type == 'pair' %}
-        // Pair Bar Chart
-        const pairBarCtx = document.getElementById('pairBarChart').getContext('2d');
-        new Chart(pairBarCtx, {
-            type: 'horizontalBar',
-            data: {
-                labels: [{% for pair in result.pairs[:8] %}'{{ pair.products }}'{% if not loop.last %},{% endif %}{% endfor %}],
-                datasets: [{
-                    label: 'Birlikte Satış',
-                    data: [{% for pair in result.pairs[:8] %}{{ pair.count }}{% if not loop.last %},{% endif %}{% endfor %}],
-                    backgroundColor: '#48bb78',
-                    borderColor: '#38a169',
-                    borderWidth: 2,
-                    borderRadius: 8
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        grid: {
-                            color: '#e2e8f0'
-                        }
-                    },
-                    y: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
-
-        {% elif result.type == 'time' %}
-        // Time Line Chart
-        const timeLineCtx = document.getElementById('timeLineChart').getContext('2d');
-        new Chart(timeLineCtx, {
-            type: 'line',
-            data: {
-                labels: [{% for month, sales in result.data %}'{{ month }}'{% if not loop.last %},{% endif %}{% endfor %}],
-                datasets: [{
-                    label: 'Aylık Satış',
-                    data: [{% for month, sales in result.data %}{{ sales }}{% if not loop.last %},{% endif %}{% endfor %}],
-                    borderColor: '#48bb78',
-                    backgroundColor: 'rgba(72, 187, 120, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#48bb78',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 3,
-                    pointRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: '#e2e8f0'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                }
-            }
-        });
-
-        {% elif result.type == 'customer' %}
-        // Customer Radar Chart
-        const customerRadarCtx = document.getElementById('customerRadarChart').getContext('2d');
-        new Chart(customerRadarCtx, {
-            type: 'radar',
-            data: {
-                labels: ['Ortalama Ürün', 'Ortalama Çeşit', 'Maksimum Ürün', 'Maksimum Çeşit', 'Müşteri Sayısı'],
-                datasets: [{
-                    label: 'Müşteri Metrikleri',
-                    data: [
-                        {{ result.avg_products_per_customer }},
-                        {{ result.avg_variety_per_customer }},
-                        {{ result.max_products / 10 }},
-                        {{ result.max_variety }},
-                        {{ result.total_customers / 10 }}
-                    ],
-                    backgroundColor: 'rgba(72, 187, 120, 0.2)',
-                    borderColor: '#48bb78',
-                    borderWidth: 3,
-                    pointBackgroundColor: '#48bb78',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    r: {
-                        beginAtZero: true,
-                        grid: {
-                            color: '#e2e8f0'
-                        },
-                        angleLines: {
-                            color: '#e2e8f0'
-                        },
-                        pointLabels: {
-                            font: {
-                                size: 12
-                            }
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
                         }
                     }
                 }
             }
         });
         {% endif %}
-
-        // Progress bar animation
-        document.addEventListener('DOMContentLoaded', function() {
-            const progressBars = document.querySelectorAll('.progress-bar');
-            setTimeout(() => {
-                progressBars.forEach(bar => {
-                    const width = bar.style.width;
-                    bar.style.width = '0%';
-                    setTimeout(() => {
-                        bar.style.width = width;
-                    }, 100);
-                });
-            }, 500);
-        });
-
-        // Add stagger animation to fade-in elements
-        const fadeElements = document.querySelectorAll('.fade-in');
-        fadeElements.forEach((el, index) => {
-            el.style.animationDelay = `${index * 0.1}s`;
-        });
     </script>
 </body>
 </html>
