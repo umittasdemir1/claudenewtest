@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Müşteri Analiz Paneli</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            padding: 40px;
+            margin-top: 50px;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+        }
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 12px 15px;
+        }
+        .lift-inputs {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container col-md-6">
+        <div class="text-center mb-4">
+            <h1 class="display-4 text-primary mb-3">📊 Müşteri Analiz Paneli</h1>
+            <p class="lead text-muted">Excel dosyanızı yükleyerek detaylı satış analizleri yapın</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card border-0 shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">📁 Dosya Yükleme ve Analiz Seçimi</h4>
+            </div>
+            <div class="card-body">
+                <form action="/analyze" method="post" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Excel Dosyası Seçin:</label>
+                        <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
+                        <div class="form-text">Desteklenen formatlar: .xlsx, .xls (Maksimum 16MB)</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Analiz Türünü Seçin:</label>
+                        <select name="analysis" class="form-select" id="analysisType" onchange="toggleLiftInputs()">
+                            <option value="sales">📈 Ürün Satış Analizi</option>
+                            <option value="lift">🔗 Lift Analizi</option>
+                            <option value="pair">👥 Birlikte Satılan Ürünler</option>
+                            <option value="time">📅 Zaman Bazlı Satış</option>
+                            <option value="customer">👤 Müşteri Tipi Analizi</option>
+                        </select>
+                    </div>
+
+                    <div id="liftInputs" class="lift-inputs">
+                        <div class="alert alert-info">
+                            <strong>Lift Analizi:</strong> İki ürünün birlikte satılma olasılığını ölçer. 
+                            1'den büyük değerler pozitif korelasyon gösterir.
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Ürün 1:</label>
+                                <input type="text" name="urun1" class="form-control" placeholder="Örn: DENİZ ŞORTU">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Ürün 2:</label>
+                                <input type="text" name="urun2" class="form-control" placeholder="Örn: ŞORT">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            🚀 Analizi Başlat
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-4 border-0 shadow">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">ℹ️ Excel Dosyası Gereksinimleri</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Excel dosyanızda şu sütunlar olmalı:</strong></p>
+                <ul>
+                    <li><strong>D Sütunu - Numara:</strong> Sipariş/Fatura numarası</li>
+                    <li><strong>G Sütunu - Ürün Grubu:</strong> Ürün kategorisi (DENİZ ŞORTU, ŞORT, vb.)</li>
+                    <li><strong>C Sütunu - Tarih:</strong> Satış tarihi (sadece zaman analizi için)</li>
+                </ul>
+                <div class="alert alert-warning mt-2">
+                    <small><strong>Not:</strong> Lift analizi için ürün adlarını tam olarak yazın. Örnek: "DENİZ ŞORTU", "ŞORT"</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleLiftInputs() {
+            const analysisType = document.getElementById('analysisType').value;
+            const liftInputs = document.getElementById('liftInputs');
+            
+            if (analysisType === 'lift') {
+                liftInputs.style.display = 'block';
+            } else {
+                liftInputs.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
