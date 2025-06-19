@@ -128,19 +128,20 @@ def analyze():
         
         # Analiz türüne göre işlem
         if analysis_type == 'sales':
+            # ESKİ - Ürün kategori analizi
             product_counts = Counter(row['Ürün Grubu'] for row in clean_data)
             total_sales = sum(product_counts.values())
             
             result_data = {
                 'type': 'sales',
-                'title': 'Ürün Satış Analizi',
+                'title': 'Ürün Kategori Analizi',
                 'data': list(product_counts.most_common()),
                 'total_products': len(product_counts),
                 'total_sales': total_sales
             }
             
         elif analysis_type == 'product_detail':
-            # Ürün adı bazında detaylı analiz
+            # YENİ - Ürün adı bazında detaylı analiz
             product_name_counts = Counter(row['Ürün Adı'] for row in clean_data if 'Ürün Adı' in row)
             product_group_mapping = {}
             
@@ -176,7 +177,7 @@ def analyze():
             }
             
         elif analysis_type == 'sales_rep':
-            # Satış sorumlusu performans analizi
+            # YENİ - Satış sorumlusu performans analizi
             rep_performance = defaultdict(lambda: {
                 'total_sales': 0,
                 'unique_customers': set(),
@@ -222,6 +223,7 @@ def analyze():
             }
             
         elif analysis_type == 'lift':
+            # ESKİ - Lift analizi
             if not urun1 or not urun2:
                 flash('Lift analizi için her iki ürün adını da giriniz!', 'error')
                 return redirect(url_for('index'))
@@ -286,7 +288,7 @@ def analyze():
             }
             
         elif analysis_type == 'pair':
-            # Sipariş bazında ürün grupları
+            # ESKİ - Birlikte satılan ürünler
             order_products = defaultdict(set)
             for row in clean_data:
                 order_products[row['Numara']].add(row['Ürün Grubu'])
@@ -306,7 +308,7 @@ def analyze():
             }
             
         elif analysis_type == 'time':
-            # Tarih sütunu kontrolü
+            # ESKİ - Zaman analizi
             time_data = []
             for row in clean_data:
                 if 'Tarih' in row and row['Tarih']:
@@ -335,7 +337,7 @@ def analyze():
             }
             
         elif analysis_type == 'customer':
-            # Müşteri analizi
+            # ESKİ - Müşteri analizi
             customer_col = 'Müşteri' if any('Müşteri' in row for row in clean_data) else 'Numara'
             
             customer_products = defaultdict(list)
