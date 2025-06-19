@@ -3,67 +3,410 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Müşteri Analiz Paneli</title>
+    <title>CRM Analytics Dashboard</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 50%, #c3e6cb 100%);
+            min-height: 100vh;
+            color: #2d3748;
+        }
+
+        .dashboard-container {
+            display: flex;
             min-height: 100vh;
         }
-        .container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            padding: 40px;
-            margin-top: 50px;
+
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 0 24px 24px 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 32px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
         }
-        .btn-primary {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+
+        .logo {
+            padding: 0 32px 32px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 32px;
+        }
+
+        .logo h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0;
+        }
+
+        .logo .subtitle {
+            font-size: 14px;
+            color: #718096;
+            margin-top: 4px;
+        }
+
+        .nav-item {
+            margin: 0 16px 8px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+        }
+
+        .nav-item:hover:not(.active) {
+            background: rgba(72, 187, 120, 0.1);
+            transform: translateX(4px);
+        }
+
+        .nav-link {
+            padding: 16px 24px;
+            color: inherit;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            border-radius: 12px;
+        }
+
+        .nav-link i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 32px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 16px;
+            margin: 0;
+        }
+
+        .create-btn {
+            background: linear-gradient(135deg, #2d3748, #4a5568);
+            color: white;
             border: none;
-            border-radius: 10px;
-            padding: 12px 30px;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            float: right;
+            margin-top: -60px;
         }
+
+        .create-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(45, 55, 72, 0.3);
+            color: white;
+        }
+
+        .analysis-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .form-section {
+            margin-bottom: 32px;
+        }
+
+        .form-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #f7fafc;
+        }
+
+        .file-upload-area:hover {
+            border-color: #48bb78;
+            background: rgba(72, 187, 120, 0.05);
+        }
+
+        .file-upload-area.dragover {
+            border-color: #48bb78;
+            background: rgba(72, 187, 120, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #cbd5e0;
+            margin-bottom: 16px;
+        }
+
         .form-control, .form-select {
-            border-radius: 10px;
-            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
         }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #48bb78;
+            box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.1);
+            background: white;
+        }
+
         .lift-inputs {
             display: none;
+            background: rgba(72, 187, 120, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 16px;
+            border: 1px solid rgba(72, 187, 120, 0.2);
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(72, 187, 120, 0.3);
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 24px;
+            margin-top: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3182ce;
+        }
+
+        .info-card h5 {
+            color: #3182ce;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .requirements-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .requirements-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .requirements-list li i {
+            color: #48bb78;
+            width: 16px;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .alert-danger {
+            background: rgba(245, 101, 101, 0.1);
+            color: #c53030;
+            border-left: 4px solid #f56565;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+                border-radius: 0;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 16px;
+            }
+            
+            .dashboard-container {
+                flex-direction: column;
+            }
+            
+            .create-btn {
+                float: none;
+                margin-top: 16px;
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container col-md-6">
-        <div class="text-center mb-4">
-            <h1 class="display-4 text-primary mb-3">📊 Müşteri Analiz Paneli</h1>
-            <p class="lead text-muted">Excel dosyanızı yükleyerek detaylı satış analizleri yapın</p>
-        </div>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <div class="card border-0 shadow">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">📁 Dosya Yükleme ve Analiz Seçimi</h4>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>Analytics</h2>
+                <div class="subtitle">CRM Dashboard</div>
             </div>
-            <div class="card-body">
+            
+            <div class="nav-item active">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-chart-line"></i>
+                    Analiz Merkezi
+                </a>
+            </div>
+            
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-chart-bar"></i>
+                    Satış Analizi
+                </a>
+            </div>
+            
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-link"></i>
+                    Lift Analizi
+                </a>
+            </div>
+            
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-users"></i>
+                    Çift Analizi
+                </a>
+            </div>
+            
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-calendar-alt"></i>
+                    Zaman Analizi
+                </a>
+            </div>
+            
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-user-circle"></i>
+                    Müşteri Analizi
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <h1>Dashboard</h1>
+                <p>Excel dosyanızı yükleyerek detaylı CRM analizleri gerçekleştirin.</p>
+                <button class="create-btn">
+                    <i class="fas fa-plus"></i>
+                    Yeni Analiz Oluştur
+                </button>
+            </header>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Analysis Form -->
+            <div class="analysis-card">
                 <form action="/analyze" method="post" enctype="multipart/form-data">
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Excel Dosyası Seçin:</label>
-                        <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
-                        <div class="form-text">Desteklenen formatlar: .xlsx, .xls (Maksimum 16MB)</div>
+                    <!-- File Upload Section -->
+                    <div class="form-section">
+                        <h3>
+                            <i class="fas fa-file-excel"></i>
+                            Excel Dosyası Yükle
+                        </h3>
+                        <div class="file-upload-area" onclick="document.getElementById('file-input').click()">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <h5>Dosyanızı buraya sürükleyin</h5>
+                            <p class="text-muted">veya tıklayarak seçin</p>
+                            <small class="text-muted">Desteklenen formatlar: .xlsx, .xls (Maks. 16MB)</small>
+                            <input type="file" name="file" id="file-input" class="d-none" accept=".xlsx,.xls" required>
+                        </div>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Analiz Türünü Seçin:</label>
+                    <!-- Analysis Type Section -->
+                    <div class="form-section">
+                        <h3>
+                            <i class="fas fa-chart-pie"></i>
+                            Analiz Türü Seçin
+                        </h3>
                         <select name="analysis" class="form-select" id="analysisType" onchange="toggleLiftInputs()">
                             <option value="sales">📈 Ürün Satış Analizi</option>
                             <option value="lift">🔗 Lift Analizi</option>
@@ -71,50 +414,56 @@
                             <option value="time">📅 Zaman Bazlı Satış</option>
                             <option value="customer">👤 Müşteri Tipi Analizi</option>
                         </select>
+
+                        <!-- Lift Analysis Inputs -->
+                        <div id="liftInputs" class="lift-inputs">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Ürün 1:</label>
+                                    <input type="text" name="urun1" class="form-control" placeholder="Örn: DENİZ ŞORTU">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Ürün 2:</label>
+                                    <input type="text" name="urun2" class="form-control" placeholder="Örn: ŞORT">
+                                </div>
+                            </div>
+                            <div class="alert alert-info d-flex align-items-center">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <small><strong>Lift Analizi:</strong> İki ürünün birlikte satılma olasılığını ölçer. 1'den büyük değerler pozitif korelasyon gösterir.</small>
+                            </div>
+                        </div>
                     </div>
 
-                    <div id="liftInputs" class="lift-inputs">
-                        <div class="alert alert-info">
-                            <strong>Lift Analizi:</strong> İki ürünün birlikte satılma olasılığını ölçer. 
-                            1'den büyük değerler pozitif korelasyon gösterir.
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Ürün 1:</label>
-                                <input type="text" name="urun1" class="form-control" placeholder="Örn: DENİZ ŞORTU">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Ürün 2:</label>
-                                <input type="text" name="urun2" class="form-control" placeholder="Örn: ŞORT">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            🚀 Analizi Başlat
-                        </button>
-                    </div>
+                    <!-- Submit Button -->
+                    <button type="submit" class="analyze-btn">
+                        <i class="fas fa-rocket"></i>
+                        Analizi Başlat
+                    </button>
                 </form>
             </div>
-        </div>
 
-        <div class="card mt-4 border-0 shadow">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">ℹ️ Excel Dosyası Gereksinimleri</h5>
-            </div>
-            <div class="card-body">
-                <p><strong>Excel dosyanızda şu sütunlar olmalı:</strong></p>
-                <ul>
-                    <li><strong>D Sütunu - Numara:</strong> Sipariş/Fatura numarası</li>
-                    <li><strong>G Sütunu - Ürün Grubu:</strong> Ürün kategorisi (DENİZ ŞORTU, ŞORT, vb.)</li>
-                    <li><strong>C Sütunu - Tarih:</strong> Satış tarihi (sadece zaman analizi için)</li>
+            <!-- Info Card -->
+            <div class="info-card">
+                <h5>
+                    <i class="fas fa-info-circle"></i>
+                    Excel Dosyası Gereksinimleri
+                </h5>
+                <ul class="requirements-list">
+                    <li>
+                        <i class="fas fa-check"></i>
+                        <strong>D Sütunu - Numara:</strong> Sipariş/Fatura numarası
+                    </li>
+                    <li>
+                        <i class="fas fa-check"></i>
+                        <strong>G Sütunu - Ürün Grubu:</strong> Ürün kategorisi (DENİZ ŞORTU, ŞORT, vb.)
+                    </li>
+                    <li>
+                        <i class="fas fa-check"></i>
+                        <strong>C Sütunu - Tarih:</strong> Satış tarihi (sadece zaman analizi için)
+                    </li>
                 </ul>
-                <div class="alert alert-warning mt-2">
-                    <small><strong>Not:</strong> Lift analizi için ürün adlarını tam olarak yazın. Örnek: "DENİZ ŞORTU", "ŞORT"</small>
-                </div>
             </div>
-        </div>
+        </main>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
@@ -128,6 +477,48 @@
             } else {
                 liftInputs.style.display = 'none';
             }
+        }
+
+        // File drag and drop functionality
+        const fileUploadArea = document.querySelector('.file-upload-area');
+        const fileInput = document.getElementById('file-input');
+
+        fileUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.add('dragover');
+        });
+
+        fileUploadArea.addEventListener('dragleave', () => {
+            fileUploadArea.classList.remove('dragover');
+        });
+
+        fileUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                updateFileDisplay(files[0].name);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                updateFileDisplay(e.target.files[0].name);
+            }
+        });
+
+        function updateFileDisplay(filename) {
+            const uploadArea = document.querySelector('.file-upload-area');
+            uploadArea.innerHTML = `
+                <div class="upload-icon">
+                    <i class="fas fa-file-excel" style="color: #48bb78;"></i>
+                </div>
+                <h5>${filename}</h5>
+                <p class="text-success">Dosya seçildi!</p>
+                <small class="text-muted">Değiştirmek için tıklayın</small>
+            `;
         }
     </script>
 </body>
